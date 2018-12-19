@@ -96,13 +96,28 @@ app.use('/graphql', graphQlHttp({
                 title: args.eventInput.title,
                 description: args.eventInput.description,
                 price: +args.eventInput.price,
-                date: new Date(args.eventInput.date)
+                date: new Date(args.eventInput.date),
+                creator: '5c1a696159d929dc24818701'
             });
+
+            let createdEvent;
 
             return event.save()
                 .then(result => {
+                    createdEvent = { ...result._doc, _id: result._doc._id.toString() }; //._doc is a mongoose property which leaves out all meta data
+                    return User.findById('5c1a696159d929dc24818701')
+                    
+                })
+                .then(user => {
+                    if (!user) { //if the user doesnt exists 
+                        throw new Error('User not found')
+                    }
+                    user.createdEvents.push(event); //adding the event to the list of createdEvents for the user that created it
+                    return user.save(); //updates user DB
+                })
+                .then(result => {
                     console.log(result, 'successful post to DB');
-                    return { ...result._doc, _id: result._doc._id.toString() }; //._doc is a mongoose property which leaves out all meta data
+                    return createdEvent
                 })
                 .catch(err => {
                     console.log(err, 'failed post to DB');
