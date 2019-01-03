@@ -20,6 +20,35 @@ const app = express();
 
 app.use(bodyParser.json());
 
+const events = eventIds => {
+    return Event.find({ _id: {$in: eventIds} }) 
+        .then(events => {
+            return events.map(event => {
+                return { 
+                    ...event._doc, 
+                    _id: event.id, //overwrting _id value with value returned by this function
+                    creator: user.bind(this, event.creator) //value of creator will call function below
+                 }
+            })
+        })
+        .catch(err => {
+            throw err;
+    })
+}
+
+const user = userId => {
+    return User.findById(userId)
+            .then(user => {
+                return { ...user._doc, 
+                    _id: user.id, //overwriting user ID
+                    createdEvents: events.bind(this, user._doc.createdEvents)
+                 } 
+            })
+            .catch(err => {
+                throw err;
+    })
+}
+
 //this is where you config graphql api
 //ex. where to find end points, where to find resolvers
 app.use('/graphql', graphQlHttp({
@@ -35,12 +64,14 @@ app.use('/graphql', graphQlHttp({
             description: String!
             price: Float!
             date: String!
+            creator: User!
         }
 
         type User {
             _id: ID!
             email: String!
             password: String
+            createdEvents: [Event!]
         }
 
         input EventInput {
@@ -74,7 +105,11 @@ app.use('/graphql', graphQlHttp({
             return Event.find() //find is a method from mongoose and if left blank, will return everything in Event collection
                 .then(events => {
                     return events.map(event => {
-                        return { ...event._doc, _id: event.id };
+                        return { 
+                            ...event._doc, 
+                            _id: event.id,
+                            creator: user.bind(this, event._doc.creator) //uses function at top to het creator id
+                        };
                     })
                 })
                 .catch(err => {
@@ -104,7 +139,7 @@ app.use('/graphql', graphQlHttp({
 
             return event.save()
                 .then(result => {
-                    createdEvent = { ...result._doc, _id: result._doc._id.toString() }; //._doc is a mongoose property which leaves out all meta data
+                    createdEvent = { ...result._doc, _id: result._doc._id.toString(), creator: user.bind(this, result._doc.creator) }; //._doc is a mongoose property which leaves out all meta data
                     return User.findById('5c1a696159d929dc24818701')
                     
                 })
