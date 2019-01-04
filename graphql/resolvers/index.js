@@ -22,6 +22,19 @@ const events = async eventIds => {
     } 
 }
 
+const singleEvent = async eventId => {
+    try {
+        const event = await Event.findById(eventId);
+        return {
+            ...event._doc,
+            _id: event.id,
+            creator: user.bind(this, event.creator)
+        }
+    } catch (err) {
+        throw err
+    }
+}
+
 const user = async userId => {
     try {
         const user = await User.findById(userId)
@@ -59,6 +72,8 @@ module.exports = { //points to object that have resolver functions
                 return { 
                     ...booking._doc, 
                     _id: booking.id, 
+                    user: user.bind(this, booking._doc.user),
+                    event: singleEvent.bind(this, booking._doc.event),
                     createdAt: new Date(booking._doc.createdAt).toISOString(),
                     updatedAt: new Date(booking._doc.updatedAt).toISOString()
                  }
@@ -129,7 +144,7 @@ module.exports = { //points to object that have resolver functions
             throw err;
         }
     },
-    bookEvent: async (args) => {
+    bookEvent: async (args) => { //same name at in rootMuation (graphql schema)
         const fetchedEvent = await Event.findOne({ _id: args.eventId }) //args.eventId is from graphql schema
         const booking = new Booking({
             user: '5c2e786774dc6ef774b67710',
@@ -139,8 +154,24 @@ module.exports = { //points to object that have resolver functions
         return {
             ...result._doc,
             _id: result.id,
+            user: user.bind(this, booking._doc.user),
+            event: singleEvent.bind(this, booking._doc.event),
             createdAt: new Date(result._doc.createdAt).toISOString(),
             updatedAt: new Date(result._doc.updatedAt).toISOString()
+        }
+    },
+    cancelBooking: async (args) => {
+        try {
+            const booking = await Booking.findById(args.bookingId).populate('event');
+            const event = { 
+                ...booking.event._doc, 
+                _id: booking.event.id,
+                creator: user.bind(this, booking.event._doc.creator)
+             }
+            await Booking.deleteOne({_id: args.bookingId})
+            return event;
+        } catch(err) {
+            throw err
         }
     }
 }
