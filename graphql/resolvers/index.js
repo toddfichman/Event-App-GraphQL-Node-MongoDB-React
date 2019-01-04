@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 
 const Event = require('../../models/event');
 const User = require('../../models/user');
+const Booking = require('../../models/booking');
 
 //function the returns the events
 const events = async eventIds => {
@@ -34,8 +35,6 @@ const user = async userId => {
 }
 
 
-
-
 module.exports = { //points to object that have resolver functions
     events: async () => { //resolvers need same name as query/mutation to them
         try {
@@ -52,6 +51,21 @@ module.exports = { //points to object that have resolver functions
             throw err
         }
            
+    },
+    bookings: async () => {
+        try {
+            const bookings = await Booking.find();
+            return bookings.map(booking => {
+                return { 
+                    ...booking._doc, 
+                    _id: booking.id, 
+                    createdAt: new Date(booking._doc.createdAt).toISOString(),
+                    updatedAt: new Date(booking._doc.updatedAt).toISOString()
+                 }
+            })
+        } catch (err) {
+            throw err;
+        }
     },
     createEvent: async (args) => { //args is an object based on arguments passed in schema creation
         // const event = {
@@ -113,6 +127,20 @@ module.exports = { //points to object that have resolver functions
             return { ... result._doc, password: null, _id: result.id }  //set password to null so it isnt returned     
         } catch (err) {
             throw err;
+        }
+    },
+    bookEvent: async (args) => {
+        const fetchedEvent = await Event.findOne({ _id: args.eventId }) //args.eventId is from graphql schema
+        const booking = new Booking({
+            user: '5c2e786774dc6ef774b67710',
+            event: fetchedEvent
+        });
+        const result = await booking.save();
+        return {
+            ...result._doc,
+            _id: result.id,
+            createdAt: new Date(result._doc.createdAt).toISOString(),
+            updatedAt: new Date(result._doc.updatedAt).toISOString()
         }
     }
 }
