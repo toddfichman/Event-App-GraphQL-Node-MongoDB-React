@@ -1,6 +1,7 @@
 const { dateToString } = require('../../helpers/date');
 const { transformEvent } = require('./merge');
 const Event = require('../../models/event');
+const User = require('../../models/user');
 
 
 module.exports = { //points to object that have resolver functions
@@ -15,14 +16,17 @@ module.exports = { //points to object that have resolver functions
         }
            
     },
-    createEvent: async (args) => { //args is an object based on arguments passed in schema creation
+    createEvent: async (args, req) => { //args is an object based on arguments passed in schema creation
+        if(!req.isAuth) {
+            throw new Error('Unauthenticated')
+        }
         //event is the model from mongoose
         const event = new Event({
             title: args.eventInput.title,
             description: args.eventInput.description,
             price: +args.eventInput.price,
             date: dateToString(args.eventInput.date),
-            creator: '5c2e786774dc6ef774b67710'
+            creator: req.userId
         });
 
         let createdEvent;
@@ -30,7 +34,7 @@ module.exports = { //points to object that have resolver functions
         try {
             const result = await event.save()
             createdEvent = transformEvent(result);
-            const creator = await User.findById('5c2e786774dc6ef774b67710')
+            const creator = await User.findById(req.userId)
             
             if (!creator) { //if the user doesnt exists 
                 throw new Error('User not found')
