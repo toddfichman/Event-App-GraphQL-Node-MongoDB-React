@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 // this package exports a middleware function that takes in 
 // incoming requests and funnels them through a graphql
 // query parser and forward them to the right resolvers
-const graphQlHttp = require('express-graphql');
+const graphqlHttp = require('express-graphql');
 
 const graphQlSchema = require('./graphql/schema/index');
 
@@ -19,6 +19,7 @@ const app = express();
 
 app.use(bodyParser.json());
 
+
 //middleware to defines what request are allowed and by whom
 app.use((req, res, next) => {
     //allows everyone to send requests to server
@@ -28,19 +29,19 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Methods', 'POST,GET,OPTIONS');
 
     //contols what kind of headers can be sent to server (like 2 headers above)
-    res.setHeader('Access-Control-Allow-HEADERS', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     if(req.method === 'OPTIONS') {
         return res.sendStatus(200);
     }
     next();
-})
+});
 
 app.use(isAuth);
 
 //this is where you config graphql api
 //ex. where to find end points, where to find resolvers
-app.use('/graphql', graphQlHttp({
+app.use('/graphql', graphqlHttp({
     schema: graphQlSchema,
     rootValue: graphQlResolvers,
     graphiql: true
@@ -48,7 +49,7 @@ app.use('/graphql', graphQlHttp({
 
 mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0-22ex0.mongodb.net/${process.env.MONGO_DB}?retryWrites=true`, { useNewUrlParser: true })
     .then(() => {
-        app.listen(3001);
+        app.listen(8000);
     })
     .catch(err => {
         console.log(err)

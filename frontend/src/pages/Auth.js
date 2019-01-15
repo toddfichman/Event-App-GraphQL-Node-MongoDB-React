@@ -2,10 +2,15 @@ import React, { Component } from 'react';
 
 import './Auth.css';
 
+import AuthContext from '../context/auth-context';
+
 export default class AuthPage extends Component {
   state = {
     isLogin: true
   }
+
+  //this.context can now be used to access context in '../context/auth-context'
+  static contextType = AuthContext;
 
   constructor(props) {
     super(props);
@@ -33,7 +38,7 @@ export default class AuthPage extends Component {
     let requestBody = {
       query: `
         query {
-          login({email: "${email}", password: "${password}"}) {
+          login(email: "${email}", password: "${password}") {
             userId
             token
             tokenExpiration
@@ -57,7 +62,7 @@ export default class AuthPage extends Component {
     }
 
 
-    fetch('http://localhost:3001/graphql', {
+    fetch('http://localhost:8000/graphql', {
       method: 'POST',
       body: JSON.stringify(requestBody), 
       headers: {
@@ -66,12 +71,19 @@ export default class AuthPage extends Component {
     })
     .then(res => {
       if (res.status !== 200 && res.status !== 201) {
+        console.log(res)
         throw new Error('Failed');
       }
       return res.json();
     })
     .then(resData => {
-      console.log(resData);
+      if (this.state.isLogin) { //if we are logged in
+        //pass the token, userId, and tokenExpiration to login method from auth-context
+        this.context.login(
+          resData.data.login.token, 
+          resData.data.login.userId, 
+          resData.data.login.tokenExpiration)
+      }
     })
     .catch(err => {
       console.log(err)
