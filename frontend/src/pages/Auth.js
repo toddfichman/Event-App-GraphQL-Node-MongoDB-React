@@ -61,7 +61,6 @@ export default class AuthPage extends Component {
       };
     }
 
-
     fetch('http://localhost:8000/graphql', {
       method: 'POST',
       body: JSON.stringify(requestBody), 
