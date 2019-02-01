@@ -11,7 +11,7 @@ module.exports = { //points to object that have resolver functions
             throw new Error('Unauthenticated')
         }
         try {
-            const bookings = await Booking.find();
+            const bookings = await Booking.find({user: req.userId}); //returning only bookings that specific user made
             return bookings.map(booking => {
                 return transformBooking(booking);
             })
