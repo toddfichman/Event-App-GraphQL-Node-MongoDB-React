@@ -1,6 +1,16 @@
 const Event = require('../../models/event');
 const User = require('../../models/user');
 const { dateToString } = require('../../helpers/date');
+const DataLoader = require('dataloader')
+
+//passing a batching function to the DataLoader object
+const eventLoader = new DataLoader((eventId) => {
+  return events(eventId)
+});
+
+const userLoader = new DataLoader(userIds => {
+  return User.find({_id: {$in: userIds}}); //return all users whose _id can be found in userIds array thats passed in
+})
 
 //functions that help merge data 
 
@@ -17,8 +27,8 @@ const events = async eventIds => {
 
 const singleEvent = async eventId => {
     try {
-        const event = await Event.findById(eventId);
-        return transformEvent(event);
+        const event = await eventLoader.load(eventId.toString()); //.load() is a data loader built-in function
+        return event;
     } catch (err) {
         throw err
     }
@@ -26,10 +36,10 @@ const singleEvent = async eventId => {
 
 const user = async userId => {
     try {
-        const user = await User.findById(userId)
+        const user = await userLoader.load(userId.toString())
         return { ...user._doc, 
             _id: user.id, //overwriting user ID
-            createdEvents: events.bind(this, user._doc.createdEvents) //binding created event to events function
+            createdEvents: eventLoader.load.bind(this, user._doc.createdEvents) //binding created event to eventLoader
          } 
     } catch (err) {
         throw err
