@@ -39,7 +39,7 @@ const user = async userId => {
         const user = await userLoader.load(userId.toString())
         return { ...user._doc, 
             _id: user.id, //overwriting user ID
-            createdEvents: eventLoader.load.bind(this, user._doc.createdEvents) //binding created event to eventLoader
+            createdEvents: () => eventLoader.loadMany(user._doc.createdEvents) //binding created event to eventLoader
          } 
     } catch (err) {
         throw err

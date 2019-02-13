@@ -37,27 +37,35 @@ export default class AuthPage extends Component {
     //querys sent to graphql
     let requestBody = {
       query: `
-        query {
-          login(email: "${email}", password: "${password}") {
+        query Login($email: String!, $password: String!) {
+          login(email: $email, password: $password) {
             userId
             token
             tokenExpiration
           }
         }
-      `
+      `,
+      variables: {
+        email: email, //first email refers to $emial in Login query, 2nd email is the const unser SsubmitHandler
+        password: password
+      }
     };
 
 
     if (!this.state.isLogin) {
       requestBody = {
         query: `
-          mutation {
-            createUser(userInput: {email: "${email}", password: "${password}"}) {
+          mutation CreateUser($email: String!, $password: String!) {
+            createUser(userInput: {email: $email, password: $password}) {
               _id
               email
             }
           }
-        `
+        `,
+        variables: {
+          email: email,
+          password: password
+        }
       };
     }
 
